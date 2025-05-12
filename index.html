@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>嘉欣的快樂驚喜</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #000000 0%, #666666 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            color: #f8f8f8;
+        }
+        .main-photo {
+            margin-top: 40px;
+            width: 350px;
+            height: auto;
+            border-radius: 24px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.4);
+            border: 4px solid #fff;
+        }
+        .gift-box {
+            margin: 36px auto 0;
+            width: 100px;
+            height: 110px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+        }
+        .gift-box.opened {
+            animation: bounce 0.8s;
+        }
+        @keyframes bounce {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.2); }
+            50% { transform: scale(0.92); }
+            80% { transform: scale(1.08);}
+            100%{ transform: scale(1);}
+        }
+        .gift-hint {
+            color: #FF5555;
+            font-weight: bold;
+            letter-spacing: 0.15em;
+            font-size: 1.1em;
+            margin-top: 6px;
+            text-shadow: 1px 2px 2px #fff, 0 0 8px #33000077;
+        }
+        .message {
+            margin-top: 24px;
+            font-size: 1.3em;
+            color: #ff8888;
+            display: none;
+            white-space: pre-line;
+            background: rgba(0,0,0,0.4);
+            padding: 18px 36px;
+            border-radius: 16px;
+            max-width: 80vw;
+            word-break: break-all;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+        }
+        .album-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 32px auto 42px;
+            gap: 24px;
+            display: none;
+        }
+        .album-photo {
+            width: 225px;
+            height: 150px;
+            border-radius: 12px;
+            object-fit: cover;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+            border: 2px solid #fff;
+            background: #222;
+            /* 重疊時加陰影更漂亮 */
+            transition: box-shadow 0.3s;
+        }
+        @media (max-width: 600px) {
+            .main-photo { width: 92vw; }
+            .album-photo { width: 90vw; height: 60vw; max-width: 225px; max-height: 150px;}
+        }
+    </style>
+</head>
+<body>
+    <!-- 主相片 -->
+    <img src="main.jpg" alt="主相片" class="main-photo">
+
+    <!-- 禮物盒 (SVG) -->
+    <div class="gift-box" id="giftBox">
+        <svg width="100" height="85" viewBox="0 0 100 85" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="35" width="80" height="40" rx="6" fill="#EA3232" stroke="#C41414" stroke-width="3"/>
+            <rect x="46" y="35" width="8" height="40" fill="#FFD700"/>
+            <rect x="7" y="22" width="86" height="17" rx="5" fill="#E85454" stroke="#C41414" stroke-width="2"/>
+            <rect x="46" y="22" width="8" height="17" fill="#FFD700"/>
+            <ellipse cx="34" cy="22" rx="13" ry="8" fill="#FFD7EA" stroke="#C41414" stroke-width="2"/>
+            <ellipse cx="66" cy="22" rx="13" ry="8" fill="#FFD7EA" stroke="#C41414" stroke-width="2"/>
+            <circle cx="50" cy="22" r="6" fill="#FFD700" stroke="#C41414" stroke-width="2"/>
+        </svg>
+        <span class="gift-hint">請點我</span>
+    </div>
+
+    <!-- 音效與背景音樂 -->
+    <audio id="giftSound" src="ding.mp3" preload="auto"></audio>
+    <audio id="bgm" src="bgm.mp3" preload="auto" loop></audio>
+
+    <!-- 文字訊息 -->
+    <div class="message" id="message">
+        嘉欣，我們在一起多一天就快樂多一天，<br>
+        願你能夠在未來日子也這樣笑著
+    </div>
+
+    <!-- 相簿（直立、放大1.5倍） -->
+    <div class="album-container" id="albumContainer">
+        <img class="album-photo" id="albumPhoto1" src="album1.jpg" alt="相簿1">
+        <img class="album-photo" id="albumPhoto2" src="album2.jpg" alt="相簿2">
+        <img class="album-photo" id="albumPhoto3" src="album3.jpg" alt="相簿3">
+    </div>
+
+    <script>
+        const giftBox = document.getElementById('giftBox');
+        const message = document.getElementById('message');
+        const albumContainer = document.getElementById('albumContainer');
+        const albumPhotos = [
+            document.getElementById('albumPhoto1'),
+            document.getElementById('albumPhoto2'),
+            document.getElementById('albumPhoto3')
+        ];
+        const totalPhotos = 60;
+        let baseIndex = 0;
+        let slideTimer = null;
+        let boxOpened = false;
+        const giftSound = document.getElementById('giftSound');
+        const bgm = document.getElementById('bgm');
+
+        giftBox.addEventListener('click', () => {
+            if(boxOpened) return;
+            giftBox.classList.add('opened');
+            giftSound.currentTime = 0;
+            giftSound.play();
+
+            setTimeout(()=>{
+                message.style.display = 'block';
+                albumContainer.style.display = 'flex';
+                startSlideshow();
+                bgm.currentTime = 0;
+                bgm.play();
+            }, 900);
+            boxOpened = true;
+        });
+
+        function startSlideshow() {
+            function show() {
+                for(let i=0;i<3;i++){
+                    let currentIdx = (baseIndex + i) % totalPhotos;
+                    albumPhotos[i].src = `album${currentIdx+1}.jpg`;
+                }
+                baseIndex = (baseIndex+1)%totalPhotos;
+            }
+            show();
+            slideTimer = setInterval(show, 2000);
+        }
+    </script>
+</body>
+</html>
